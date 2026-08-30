@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>Network Intrusion Detection</title>
+  <style>
+    :root {
+      --bg: #edf2f7;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --header: #0f172a;
+      --header-soft: #1e293b;
+      --text: #0f172a;
+      --muted: #475569;
+      --line: rgba(148, 163, 184, 0.28);
+      --primary: #2563eb;
+      --primary-soft: rgba(37, 99, 235, 0.08);
+      --success: #10b981;
+      --success-soft: rgba(16, 185, 129, 0.12);
+      --danger: #ef4444;
+      --danger-soft: rgba(239, 68, 68, 0.12);
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, 'Segoe UI', sans-serif;
+    }
+
+    body { line-height: 1.5; }
+
+    .topbar {
+      background: var(--header);
+      border-bottom: 1px solid rgba(148,163,184,0.18);
+      height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #93c5fd, #60a5fa);
+      box-shadow: 0 0 12px rgba(96,165,250,0.85);
+    }
+
+    .brand-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #f8fafc;
+    }
+
+    .brand-subtitle {
+      font-size: 0.68rem;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: rgba(191,219,254,0.8);
+      font-weight: 700;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(16, 185, 129, 0.12);
+      color: #d1fae5;
+      border: 1px solid rgba(16,185,129,0.22);
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 10px rgba(16,185,129,0.7);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.25); opacity: 0.7; }
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 38px 22px 80px;
+    }
+
+    .page-header {
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      font-size: 0.74rem;
+      letter-spacing: 0.14em;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .page-header h2 {
+      margin: 10px 0 0;
+      font-size: clamp(2.2rem, 3vw, 3.2rem);
+      letter-spacing: -0.06em;
+      line-height: 1.08;
+      font-weight: 800;
+    }
+
+    .page-header p {
+      margin-top: 12px;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 26px;
+    }
+
+    .metric-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      min-height: 150px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), #93c5fd);
+    }
+
+    .metric-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .metric-value {
+      margin-top: 18px;
+      font-size: clamp(2rem, 2vw, 2.7rem);
+      letter-spacing: -0.06em;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+
+    .metric-note {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .metric-card.attack .metric-value { color: var(--danger); }
+    .metric-card.benign .metric-value { color: var(--success); }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 24px 24px 18px;
+      border-bottom: 1px solid rgba(148,163,184,0.2);
+    }
+
+    .panel-header h3 {
+      margin: 0;
+      font-size: 1.45rem;
+      letter-spacing: -0.04em;
+      font-weight: 800;
+    }
+
+    .panel-header p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .panel-body {
+      padding: 22px 24px 24px;
+    }
+
+    .upload-card {
+      background: linear-gradient(180deg, rgba(37,99,235,0.03), rgba(37,99,235,0.01));
+      border: 1px solid rgba(37,99,235,0.18);
+      border-radius: 16px;
+      padding: 22px 20px;
+      text-align: center;
+    }
+
+    .upload-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .upload-sub {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-bottom: 18px;
+    }
+
+    .pick-file {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(37,99,235,0.2);
+    }
+
+    input[type='file'] { display: none; }
+
+    .source-toggle {
+      display: inline-flex;
+      background: #edf2f7;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .source-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    .source-btn.active {
+      background: var(--header);
+      color: white;
+      box-shadow: 0 6px 16px rgba(15,23,42,0.12);
+    }
+
+    .source-panel {
+      display: block;
+    }
+
+    .source-panel.hidden {
+      display: none;
+    }
+
+    .file-chip,
+    .drive-input-wrap {
+      margin-top: 14px;
+      display: inline-block;
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-weight: 700;
+      padding: 8px 12px;
+      max-width: 100%;
+      word-break: break-word;
+    }
+
+    .drive-input-wrap {
+      width: min(100%, 520px);
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .drive-input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 0.92rem;
+      padding: 12px 14px;
+      outline: none;
+    }
+
+    .analyze-btn {
+      width: 100%;
+      margin-top: 18px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--header), var(--header-soft));
+      color: white;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 15px 18px;
+      cursor: pointer;
+    }
+
+    .analyze-btn:disabled { opacity: 0.8; cursor: not-allowed; }
+
+    .status-box {
+      display: none;
+      margin-top: 18px;
+      border-radius: 14px;
+      padding: 16px 18px;
+      border: 1px solid rgba(239,68,68,0.2);
+      background: var(--danger-soft);
+    }
+
+    .status-box.safe {
+      background: var(--success-soft);
+      border-color: rgba(16,185,129,0.22);
+    }
+
+    .status-box.visible { display: block; }
+
+    .status-title {
+      font-weight: 800;
+      font-size: 1.12rem;
+      letter-spacing: -0.03em;
+      color: #991b1b;
+    }
+
+    .status-box.safe .status-title { color: #065f46; }
+
+    .status-text {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 0.94rem;
+      line-height: 1.5;
+    }
+
+    .summary-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .summary-box {
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+
+    .summary-box label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .summary-box strong {
+      display: block;
+      margin-top: 8px;
+      font-size: clamp(1.4rem, 1.8vw, 2rem);
+      letter-spacing: -0.04em;
+      font-weight: 800;
+    }
+
+    .summary-box strong.attack { color: var(--danger); }
+    .summary-box strong.benign { color: var(--success); }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .filter-group {
+      display: inline-flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: #eff6ff;
+      border: 1px solid rgba(37,99,235,0.15);
+      color: var(--muted);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      background: var(--header);
+      border-color: var(--header);
+      color: white;
+    }
+
+    .search-input {
+      min-width: 230px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-soft);
+      color: var(--text);
+      padding: 10px 12px;
+      font-size: 0.92rem;
+    }
+
+    .table-wrap {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel-soft);
+    }
+
+    th, td {
+      text-align: left;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(148,163,184,0.18);
+    }
+
+    th {
+      background: #edf2f7;
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    td {
+      font-size: 0.96rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(37,99,235,0.02); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 800;
+      min-width: 92px;
+    }
+
+    .badge.attack { background: var(--danger-soft); color: #b91c1c; }
+    .badge.benign { background: var(--success-soft); color: #065f46; }
+
+    .bottom-grid {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+
+    .info-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(148,163,184,0.18);
+      color: var(--text);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-label {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .info-value {
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: 0.02em;
+    }
+
+    @media (max-width: 980px) {
+      .metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .summary-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .topbar { padding: 0 18px; }
+      .brand-title { font-size: 0.94rem; }
+      .brand-subtitle { letter-spacing: 0.1em; }
+      .status-pill { font-size: 0.64rem; letter-spacing: 0.08em; }
+      .page { padding: 22px 14px 60px; }
+      .metrics-grid, .summary-row { grid-template-columns: 1fr; }
+      .toolbar { align-items: stretch; }
+      .search-input { width: 100%; min-width: 0; }
+      .filter-group { width: 100%; }
+      .filter-btn { flex: 1; }
+      .panel-header, .panel-body { padding-left: 18px; padding-right: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <header class='topbar'>
+    <div class='brand'>
+      <span class='brand-mark'></span>
+      <div class='brand-copy'>
+        <div class='brand-title'>🛡 Intelligent Network Intrusion Detection</div>
+        <div class='brand-subtitle'>AI-Powered Network Security</div>
+      </div>
+    </div>
+
+    <div class='status-pill'>
+      <span class='status-dot'></span>
+      <span>GCN Model Online</span>
+    </div>
+  </header>
+
+  <main class='page'>
+    <div class='page-header'>
+      <div class='eyebrow'>Security Operations Dashboard</div>
+      <h2>Network Traffic Analysis</h2>
+      <p>Analyze network-flow data using a graph neural network to detect suspicious behavior and classify traffic as benign or malicious.</p>
+    </div>
+
+    <section class='metrics-grid'>
+      <div class='metric-card'>
+        <div class='metric-label'>Flows</div>
+        <div class='metric-value' id='flowsAnalyzed'>0</div>
+        <div class='metric-note'>Rows processed</div>
+      </div>
+
+      <div class='metric-card'>
+        <div class='metric-label'>IP Nodes</div>
+        <div class='metric-value' id='networkNodes'>0</div>
+        <div class='metric-note'>Unique entities</div>
+      </div>
+
+      <div class='metric-card attack'>
+        <div class='metric-label'>Attack Nodes</div>
+        <div class='metric-value' id='attackNodes'>0</div>
+        <div class='metric-note'>Threat identified</div>
+      </div>
+
+      <div class='metric-card benign'>
+        <div class='metric-label'>Benign Nodes</div>
+        <div class='metric-value' id='benignNodes'>0</div>
+        <div class='metric-note'>Normal traffic</div>
+      </div>
+    </section>
+
+    <section class='panel'>
+      <div class='panel-header'>
+        <h3>Analyze Network Traffic</h3>
+        <p>Upload a CICIDS network-flow CSV file for graph-based intrusion detection.</p>
+      </div>
+
+      <div class='panel-body'>
+        <div class='upload-card'>
+          <div class='upload-title'>Upload Network Flow Dataset</div>
+          <div class='upload-sub'>Choose how you want to provide the CSV file.</div>
+
+          <div class='source-toggle'>
+            <button class='source-btn active' data-source='local' type='button'>Local</button>
+            <button class='source-btn' data-source='drive' type='button'>Drive</button>
+          </div>
+
+          <div id='localSourcePanel' class='source-panel'>
+            <label class='pick-file' for='csvFile'>📁 Choose CSV File</label>
+            <input type='file' id='csvFile' accept='.csv'>
+            <div class='file-chip' id='selectedFile'>No file selected</div>
+          </div>
+
+          <div id='driveSourcePanel' class='source-panel hidden'>
+            <div class='drive-input-wrap'>
+              <input id='driveUrl' class='drive-input' type='text' placeholder='Paste Google Drive file link or ID'>
+            </div>
+          </div>
+        </div>
+
+        <button id='analyzeButton' class='analyze-btn' type='button'>▶ Analyze Network Traffic</button>
+
+        <div id='statusBox' class='status-box'>
+          <div id='statusTitle' class='status-title'>⚠ Potential Intrusion Detected</div>
+          <div id='statusText' class='status-text'>Attack nodes identified during analysis.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class='panel' style='margin-top: 22px;'>
+      <div class='panel-header'>
+        <h3>Detection Results</h3>
+      </div>
+
+      <div class='panel-body'>
+        <div class='toolbar'>
+          <div class='filter-group'>
+            <button class='filter-btn active' data-filter='all' type='button'>All</button>
+            <button class='filter-btn' data-filter='ATTACK' type='button'>Attacks</button>
+            <button class='filter-btn' data-filter='BENIGN' type='button'>Benign</button>
+          </div>
+
+          <input id='ipSearch' class='search-input' type='text' placeholder='Search IP address...'>
+        </div>
+
+        <div class='summary-row'>
+          <div class='summary-box'>
+            <label>Rows</label>
+            <strong id='resultRows'>0</strong>
+          </div>
+          <div class='summary-box'>
+            <label>IP Nodes</label>
+            <strong id='resultNodes'>0</strong>
+          </div>
+          <div class='summary-box'>
+            <label>Attack</label>
+            <strong id='resultAttacks' class='attack'>0</strong>
+          </div>
+          <div class='summary-box'>
+            <label>Benign</label>
+            <strong id='resultBenign' class='benign'>0</strong>
+          </div>
+        </div>
+
+        <div class='table-wrap' style='margin-top: 16px;'>
+          <table>
+            <thead>
+              <tr>
+                <th>IP Address</th>
+                <th>Prediction</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody id='resultsBody'>
+              <tr>
+                <td colspan='3' style='color: var(--muted); text-align: center; padding: 22px;'>No results yet. Upload a CSV file to begin analysis.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div class='bottom-grid'>
+      <section class='panel'>
+        <div class='panel-header'>
+          <h3>Detection Pipeline</h3>
+        </div>
+        <div class='panel-body'>
+          <div class='info-list'>
+            <div class='info-row'><span class='info-label'>CSV Input</span><span class='info-value'>Network Flows</span></div>
+            <div class='info-row'><span class='info-label'>Feature Extraction</span><span class='info-value'>20 Features</span></div>
+            <div class='info-row'><span class='info-label'>Graph Construction</span><span class='info-value'>IP Communication</span></div>
+            <div class='info-row'><span class='info-label'>Inference</span><span class='info-value'>GCN</span></div>
+            <div class='info-row'><span class='info-label'>Output</span><span class='info-value'>ATTACK / BENIGN</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class='panel'>
+        <div class='panel-header'>
+          <h3>Model Information</h3>
+        </div>
+        <div class='panel-body'>
+          <div class='info-list'>
+            <div class='info-row'><span class='info-label'>Architecture</span><span class='info-value'>GCN</span></div>
+            <div class='info-row'><span class='info-label'>Framework</span><span class='info-value'>PyTorch Geometric</span></div>
+            <div class='info-row'><span class='info-label'>Input Features</span><span class='info-value'>20</span></div>
+            <div class='info-row'><span class='info-label'>Output Classes</span><span class='info-value'>2</span></div>
+            <div class='info-row'><span class='info-label'>Hidden Dimension</span><span class='info-value'>64</span></div>
+            <div class='info-row'><span class='info-label'>Device</span><span class='info-value'>CPU</span></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const fileInput = document.getElementById('csvFile');
+    const selectedFile = document.getElementById('selectedFile');
+    const driveUrlInput = document.getElementById('driveUrl');
+    const analyzeButton = document.getElementById('analyzeButton');
+    const resultsBody = document.getElementById('resultsBody');
+    const ipSearch = document.getElementById('ipSearch');
+    const statusBox = document.getElementById('statusBox');
+    const statusTitle = document.getElementById('statusTitle');
+    const statusText = document.getElementById('statusText');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const sourceButtons = document.querySelectorAll('.source-btn');
+    const localSourcePanel = document.getElementById('localSourcePanel');
+    const driveSourcePanel = document.getElementById('driveSourcePanel');
+
+    let currentFilter = 'all';
+    let currentRows = [];
+    let activeSource = 'local';
+
+    sourceButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeSource = button.dataset.source;
+        sourceButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
+        const isLocal = activeSource === 'local';
+        localSourcePanel.classList.toggle('hidden', !isLocal);
+        driveSourcePanel.classList.toggle('hidden', isLocal);
+      });
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        selectedFile.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+        selectedFile.style.color = '#065f46';
+      } else {
+        selectedFile.textContent = 'No file selected';
+        selectedFile.style.color = '#475569';
+      }
+    });
+
+    async function analyzeCSV() {
+      analyzeButton.disabled = true;
+      analyzeButton.textContent = 'Analyzing...';
+      statusBox.classList.remove('visible');
+
+      try {
+        let response;
+
+        if (activeSource === 'local') {
+          if (!fileInput.files.length) {
+            throw new Error('Please select a CSV file first.');
+          }
+
+          const file = fileInput.files[0];
+          if (!file.name.toLowerCase().endsWith('.csv')) {
+            throw new Error('Only CSV files are supported.');
+          }
+
+          const formData = new FormData();
+          formData.append('file', file);
+
+          response = await fetch('/predict', {
+            method: 'POST',
+            body: formData
+          });
+        } else {
+          const driveLink = driveUrlInput.value.trim();
+          if (!driveLink) {
+            throw new Error('Please paste a Google Drive file link or ID.');
+          }
+
+          response = await fetch('/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gdrive_url: driveLink })
+          });
+        }
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Prediction failed.');
+        }
+
+        updateDashboard(data);
+      } catch (error) {
+        statusBox.classList.add('visible');
+        statusBox.classList.remove('safe');
+        statusTitle.textContent = '⚠ Analysis Failed';
+        statusText.textContent = error.message || 'Unable to complete analysis.';
+      } finally {
+        analyzeButton.disabled = false;
+        analyzeButton.textContent = '▶ Analyze Network Traffic';
+      }
+    }
+
+    function updateDashboard(data) {
+      const rows = Number(data.rows_analyzed || 0);
+      const nodes = Number(data.nodes_analyzed || 0);
+      const attacks = Number(data.attack_count || 0);
+      const benign = Number(data.benign_count || 0);
+
+      document.getElementById('flowsAnalyzed').textContent = rows.toLocaleString();
+      document.getElementById('networkNodes').textContent = nodes.toLocaleString();
+      document.getElementById('attackNodes').textContent = attacks.toLocaleString();
+      document.getElementById('benignNodes').textContent = benign.toLocaleString();
+
+      document.getElementById('resultRows').textContent = rows.toLocaleString();
+      document.getElementById('resultNodes').textContent = nodes.toLocaleString();
+      document.getElementById('resultAttacks').textContent = attacks.toLocaleString();
+      document.getElementById('resultBenign').textContent = benign.toLocaleString();
+
+      statusBox.classList.add('visible');
+      if (attacks > 0) {
+        statusBox.classList.remove('safe');
+        statusTitle.textContent = '⚠ Potential Intrusion Detected';
+        statusText.textContent = attacks.toLocaleString() + ' attack nodes detected across the analyzed network.';
+      } else {
+        statusBox.classList.add('safe');
+        statusTitle.textContent = '✓ No Intrusion Detected';
+        statusText.textContent = 'All analyzed nodes were classified as benign.';
+      }
+
+      currentRows = Array.isArray(data.results) ? data.results : [];
+      renderResults();
+    }
+
+    function getFilteredRows() {
+      const query = ipSearch.value.trim().toLowerCase();
+      return currentRows.filter((item) => {
+        const matchesFilter = currentFilter === 'all' || item.prediction === currentFilter;
+        const matchesSearch = !query || String(item.ip_address || '').toLowerCase().includes(query);
+        return matchesFilter && matchesSearch;
+      });
+    }
+
+    function renderResults() {
+      const rows = getFilteredRows();
+      if (!rows.length) {
+        resultsBody.innerHTML = "<tr><td colspan='3' style='color: var(--muted); text-align: center; padding: 22px;'>No matching results found.</td></tr>";
+        return;
+      }
+
+      resultsBody.innerHTML = rows.map((item) => {
+        const prediction = item.prediction || 'BENIGN';
+        const confidence = Number(item.confidence || 0);
+        const badgeClass = prediction === 'ATTACK' ? 'badge attack' : 'badge benign';
+        return "<tr><td>" + (item.ip_address || '-') + "</td><td><span class='" + badgeClass + "'>" + prediction + "</span></td><td>" + confidence.toFixed(2) + "%</td></tr>";
+      }).join('');
+    }
+
+    filterButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        currentFilter = button.dataset.filter;
+        filterButtons.forEach((btn) => btn.classList.toggle('active', btn === button));
+        renderResults();
+      });
+    });
+
+    ipSearch.addEventListener('input', renderResults);
+    analyzeButton.addEventListener('click', analyzeCSV);
+  </script>
+</body>
+</html>

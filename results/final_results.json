@@ -1,0 +1,21 @@
+{
+    "dataset": "CIC-IDS2017",
+    "graph_nodes": 19129,
+    "graph_edges": 2822135,
+    "node_features": 20,
+    "GCN": {
+        "accuracy": 0.9986,
+        "precision": 0.3333,
+        "recall": 1.0,
+        "f1_score": 0.5
+    },
+    "GAT": {
+        "accuracy": 0.9864,
+        "precision": 0.0488,
+        "recall": 1.0,
+        "f1_score": 0.093,
+        "roc_auc": 0.9927
+    },
+    "best_model": "GCN",
+    "note": "Node-level evaluation is highly affected by severe class imbalance. Only 13 attack nodes were present in the complete graph."
+}

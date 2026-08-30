@@ -1,0 +1,16 @@
+{
+    "GCN": {
+        "model": "GCN",
+        "attack_precision": 0.25,
+        "attack_recall": 1.0,
+        "attack_f1": 0.4
+    },
+    "GAT": {
+        "model": "GAT",
+        "attack_precision": 0.0488,
+        "attack_recall": 1.0,
+        "attack_f1": 0.093,
+        "roc_auc": 0.9927
+    },
+    "best_model": "GCN"
+}
