@@ -18,8 +18,10 @@ SCALER_PATH = BASE_DIR / "models" / "node_scaler.pkl"
 
 
 # ============================================================
-# DEVICE
+# DEVICE & THREADS
 # ============================================================
+
+torch.set_num_threads(1)
 
 DEVICE = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"

@@ -3,7 +3,13 @@ services:
     name: intelligent-network-intrusion-detection-gnn
     env: python
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
-    startCommand: gunicorn wsgi:app
+    startCommand: gunicorn --workers 1 --threads 2 --timeout 120 wsgi:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: MKL_NUM_THREADS
+        value: "1"
