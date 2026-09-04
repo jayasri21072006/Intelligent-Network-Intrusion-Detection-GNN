@@ -1,424 +1,171 @@
-# 🛡️ Intelligent Network Intrusion Detection System
+# Intelligent Network Intrusion Detection
 
-**AI-Powered Network Intrusion Detection using Graph Neural Networks (GNN)**
+A Flask application that uses a graph convolutional network (GCN) to classify network IP nodes as `ATTACK` or `BENIGN`. Network-flow CSV data is cleaned, converted into an IP graph, normalized with the training scaler, and passed to the trained model.
 
-A production-ready deep learning system that detects network intrusions with high accuracy using Graph Convolutional Networks (GCN) and Graph Attention Networks (GAT). Features a user-friendly web interface with multiple input methods for analyzing network traffic.
+## Features
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Status](https://img.shields.io/badge/Status-Production--Ready-brightgreen)
+- Browser CSV upload
+- Google Drive file ID or supported share URL input
+- Local CSV path input
+- IP-level predictions with confidence scores
+- Summary counts for rows, nodes, edges, attacks, and benign nodes
+- Health and capability endpoints
 
----
+The current web application uses the GCN model. The repository also contains a GAT model artifact, but it is not wired into the Flask prediction path.
 
-## ✨ Key Features
+## Requirements
 
-- **🤖 Advanced Detection Models**: GCN and GAT neural networks trained on CICIDS2017/2018 datasets
-- **🎯 High Accuracy**: Achieves 95%+ accuracy on network intrusion detection
-- **🌐 Web Interface**: User-friendly Flask-based dashboard for real-time analysis
-- **📁 Multiple Input Methods**:
-  - Local file upload with drag-and-drop
-  - Google Drive integration
-  - Direct file system path access
-- **⚡ Real-time Processing**: Fast predictions on network flow data
-- **📊 Detailed Results**: Confidence scores and attack classification for each flow
-- **🔒 Production-Grade**: Robust error handling and security considerations
+- Python 3.11 recommended (`runtime.txt` and `render.yaml` target Python 3.11.9)
+- Dependencies from `requirements.txt`
+- Runtime artifacts: `models/gcn_intrusion_model.pt` and `models/node_scaler.pkl`
 
----
+## Setup
 
-## 📋 System Requirements
-
-- **Python**: 3.8 or higher
-- **RAM**: 4GB minimum (8GB recommended)
-- **Storage**: 500MB for models and dependencies
-- **OS**: Windows, macOS, or Linux
-
----
-
-## 🚀 Installation
-
-### 1. Clone or Navigate to Project
+From the repository root:
 
 ```powershell
-cd "c:\Users\Jayasri t\Intelligent-Network-Intrusion-Detection-GNN"
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-### 2. Install Dependencies
+On macOS or Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+## Run The Web App
+
+Development server:
 
 ```powershell
-pip install -r requirements.txt
+python app\app.py
 ```
 
-**Key Dependencies:**
-- `PyTorch` - Deep learning framework
-- `PyTorch Geometric` - Graph neural network library
-- `Flask` - Web framework
-- `Pandas` - Data processing
-- `NumPy` - Numerical computing
-- `gdown` - Google Drive file downloads
+Open `http://127.0.0.1:5000` in a browser.
 
-### 3. Verify Installation
+For a deployment-style server:
 
-```powershell
-# Check all imports
-python -c "import torch, flask, pandas; print('✓ All dependencies installed')"
+```bash
+gunicorn --workers 1 --threads 2 --timeout 120 wsgi:app
 ```
 
----
+The Render configuration is in `render.yaml`; the deployment entry point is `wsgi:app`.
 
-## ⚡ Quick Start
+## Input CSV Format
 
-### Start the Web Server
+The CSV must contain `Source IP`, `Destination IP`, and these 20 numeric model features:
 
-```powershell
-python app/app.py
+```text
+Source Port
+Destination Port
+Protocol
+Flow Duration
+Total Fwd Packets
+Total Backward Packets
+Total Length of Fwd Packets
+Total Length of Bwd Packets
+Fwd Packet Length Mean
+Bwd Packet Length Mean
+Flow Bytes/s
+Flow Packets/s
+Flow IAT Mean
+Fwd IAT Mean
+Bwd IAT Mean
+Packet Length Mean
+Packet Length Variance
+Average Packet Size
+Active Mean
+Idle Mean
 ```
 
-**Expected Output:**
-```
-======================================================================
-INTELLIGENT NETWORK INTRUSION DETECTION - AI-POWERED BACKEND
-======================================================================
+Column-name whitespace is trimmed. Infinite values and rows with missing required values are removed. The request fails if no valid rows remain.
 
-🤖 Model:          Graph Convolutional Network (GCN)
-📊 Input Methods:  Browser Upload | Google Drive | Local Path
-⚙️  Max File Size:  100 MB
-🌐 Server:         http://127.0.0.1:5000
+## API
 
-✅ System Status: Ready for predictions
-======================================================================
-```
+### `GET /health`
 
-### Open the Web Interface
+Returns service status and whether Google Drive support is available:
 
-Navigate to: **http://127.0.0.1:5000**
-
----
-
-## 📖 Usage Guide
-
-### Method 1: 📁 Upload CSV File (Local)
-
-**Best for**: Quick testing with files on your computer
-
-1. Click **"📁 Upload File"** tab
-2. Select CSV file from your computer (or drag & drop)
-3. Click **"▶ Analyze Network Traffic"**
-4. View results with predictions and confidence scores
-
-**Requirements:**
-- File format: CSV
-- Max size: 100 MB
-- Required columns: Source IP, Destination IP, + 20 network flow features
-
-### Method 2: ☁️ Google Drive
-
-**Best for**: Sharing datasets or analyzing remote files
-
-1. Click **"☁️ Google Drive"** tab
-2. Paste Google Drive link or file ID:
-   ```
-   https://drive.google.com/file/d/FILE_ID/view
-   ```
-   Or just: `FILE_ID`
-3. Click **"▶ Analyze"**
-4. Wait for download and analysis to complete
-
-**Note:** File must be publicly shared or accessible
-
-### Method 3: 💾 Local File Path
-
-**Best for**: Direct access to files on your system
-
-1. Click **"💾 Local Path"** tab
-2. Enter full file path:
-   ```
-   C:\Users\YourName\Desktop\network_traffic.csv
-   ```
-3. Click **"▶ Analyze"**
-4. View results
-
----
-
-## 📊 Understanding Results
-
-| Column | Description |
-|--------|-------------|
-| **IP Address** | Source or destination IP address |
-| **Prediction** | 🔴 ATTACK or 🟢 BENIGN classification |
-| **Confidence** | Model certainty (0-100%) |
-| **Timestamp** | When the network flow occurred |
-
-**Example Output:**
-```
-IP Address        | Prediction | Confidence
-192.168.1.100     | BENIGN     | 98.5%
-203.0.113.45      | ATTACK     | 94.2%
-10.0.0.50         | BENIGN     | 99.1%
-```
-
----
-
-## 📁 Project Structure
-
-```
-Intelligent-Network-Intrusion-Detection-GNN/
-├── app/                          # Flask web application
-│   ├── app.py                    # Main server (Flask app)
-│   └── templates/
-│       └── index.html            # Web UI dashboard
-├── src/                          # Source code
-│   ├── model.py                  # GCN/GAT model definitions
-│   ├── train.py                  # Model training script
-│   ├── predict.py                # Prediction inference
-│   ├── graph_builder.py          # Graph construction from flows
-│   └── preprocessing.py          # Data preprocessing
-├── models/                       # Pre-trained models
-│   ├── gat_intrusion_model.pt    # GAT model (trained)
-│   └── gcn_intrusion_model.pt    # GCN model (trained)
-├── data/
-│   ├── processed/                # Processed datasets
-│   ├── test/                     # Test data samples
-│   └── graph/                    # Pre-built graph structures
-├── notebooks/                    # Jupyter notebooks
-│   └── Intelligent_Network_Intrusion_GNN.ipynb
-├── results/                      # Experiment results
-│   ├── model_comparison.json
-│   ├── gcn_predictions.csv
-│   └── final_results.json
-├── requirements.txt              # Python dependencies
-├── QUICK_START.md               # Quick start guide
-├── INSTALLATION_GUIDE.md        # Detailed setup
-└── README.md                     # This file
-```
-
----
-
-## 🔧 API Endpoints
-
-### Predictions
-```
-POST /predict
-Content-Type: multipart/form-data
-
-Parameters:
-- file: CSV file (for upload method)
-- google_drive_id: Google Drive file ID (for Drive method)
-- file_path: Local file system path (for path method)
-
-Response:
+```json
 {
-  "predictions": [...],
+  "status": "running",
   "model": "GCN",
-  "accuracy": 0.95,
-  "processing_time": 2.5
+  "gdrive_support": true
 }
 ```
 
-### System Info
-```
-GET /info
+### `GET /info`
 
-Response:
-{
-  "model": "GCN",
-  "version": "1.0",
-  "status": "ready",
-  "capabilities": ["upload", "google_drive", "local_path"]
-}
-```
+Returns model, file-size, format, and input-method capabilities.
 
-### Health Check
-```
-GET /health
+### `POST /predict`
 
-Response:
-{
-  "status": "ok",
-  "timestamp": "2024-01-15T10:30:00Z"
-}
+Browser upload:
+
+```bash
+curl -X POST -F "file=@data/test/network_flow_test_sample.csv" http://127.0.0.1:5000/predict
 ```
 
----
+Google Drive URL or ID:
 
-## 🎯 Model Details
+```bash
+curl -X POST -H "Content-Type: application/json" -d "{\"gdrive_url\":\"https://drive.google.com/file/d/FILE_ID/view\"}" http://127.0.0.1:5000/predict
+```
 
-### Graph Convolutional Network (GCN)
-- **Architecture**: 2-layer GCN with graph pooling
-- **Input**: Network flow graphs (nodes = IPs, edges = connections)
-- **Output**: Binary classification (BENIGN/ATTACK)
-- **Accuracy**: 95.2% on test set
-- **File**: `models/gcn_intrusion_model.pt`
+Local path:
 
-### Graph Attention Network (GAT)
-- **Architecture**: 3-layer GAT with multi-head attention
-- **Input**: Network flow graphs with attention weights
-- **Output**: Binary classification with confidence
-- **Accuracy**: 96.1% on test set
-- **File**: `models/gat_intrusion_model.pt`
+```bash
+curl -X POST -H "Content-Type: application/json" -d "{\"local_path\":\"C:\\\\data\\\\traffic.csv\"}" http://127.0.0.1:5000/predict
+```
 
----
+Successful responses contain `filename`, `input_type`, `rows_analyzed`, `nodes_analyzed`, `edges_analyzed`, `attack_count`, `benign_count`, and `results`. Each result contains `node_id`, `ip_address`, `prediction`, and `confidence`.
 
-## 🔍 Training & Evaluation
+Uploads are limited to 100 MB. Temporary upload and downloaded files are removed after processing.
 
-### Generate Test Predictions
+## Run The Pipeline Check
+
+The smoke test uses the bundled sample and runs the same preprocessing, graph construction, and GCN inference path as the application:
 
 ```powershell
-python src/predict.py --model gcn --input data/test/network_flow_test_sample.csv
+python tests\test_pipeline.py
 ```
 
-### View Training Results
+The test requires a working PyTorch installation and the model/scaler artifacts.
 
-Check `results/final_results.json` for:
-- Model performance metrics
-- Accuracy, Precision, Recall, F1-Score
-- ROC-AUC curves
-- Confusion matrices
+## Repository Layout
 
-### Run Full Pipeline
-
-```powershell
-python test_pipeline.py
+```text
+app/                  Flask application and web template
+src/                  preprocessing, graph building, model, and inference code
+tests/                pipeline smoke test
+models/               trained model and feature scaler artifacts
+data/raw/             raw input data
+data/test/            bundled test CSV
+data/graph/           graph artifact
+notebooks/            exploratory/training notebook
+results/              saved experiment outputs
+docs/                 setup and project notes
+wsgi.py               WSGI entry point
+Procfile              process command for hosting platforms
+render.yaml           Render deployment configuration
+requirements.txt      Python dependencies
 ```
 
----
+## Documentation
 
-## 🐛 Troubleshooting
+- [Quick start](docs/QUICK_START.md)
+- [Installation guide](docs/INSTALLATION_GUIDE.md)
+- [Project notes](docs/CHANGES_SUMMARY.md)
 
-| Issue | Solution |
-|-------|----------|
-| **"Module not found" error** | Run `pip install -r requirements.txt` |
-| **Port 5000 already in use** | Change port in `app.py`: `app.run(port=5001)` |
-| **"File not found" (local path)** | Use absolute path: `C:\full\path\to\file.csv` |
-| **Google Drive not accessible** | Ensure file is publicly shared or you have access |
-| **Slow predictions on large files** | File > 100MB or limited RAM. Split into smaller chunks |
-| **Model not loading** | Verify PyTorch and CUDA installation |
-| **CSV format error** | Ensure required columns: Source IP, Destination IP, + 20 features |
+## Limitations
 
-### Enable Debug Mode
-
-```powershell
-# In app.py, uncomment:
-app.run(debug=True, port=5000)
-```
-
----
-
-## 📈 Performance Metrics
-
-**Test Results (on CICIDS2017):**
-
-| Metric | GCN | GAT |
-|--------|-----|-----|
-| Accuracy | 95.2% | 96.1% |
-| Precision | 94.8% | 95.9% |
-| Recall | 95.6% | 96.3% |
-| F1-Score | 95.2% | 96.1% |
-| ROC-AUC | 0.988 | 0.992 |
-
----
-
-## 💾 Training Your Own Model
-
-### 1. Prepare Data
-
-```powershell
-python src/preprocessing.py --input raw_data.csv --output processed_data.pt
-```
-
-### 2. Build Graph
-
-```powershell
-python src/graph_builder.py --input processed_data.pt
-```
-
-### 3. Train Model
-
-```powershell
-python src/train.py --model gcn --epochs 100 --batch_size 32
-```
-
-### 4. Evaluate
-
-Results saved to `results/` directory
-
----
-
-## 🔒 Security Considerations
-
-- ✅ No data is stored permanently from uploads
-- ✅ Files are processed in-memory
-- ✅ Google Drive integration uses public sharing only
-- ✅ Input validation on all file uploads
-- ✅ Secure Flask configuration
-
----
-
-## 📚 Dataset Information
-
-**Supported Formats:**
-- CICIDS2017
-- CICIDS2018
-- Custom network flow CSVs
-
-**Required Features:**
-- Source IP Address
-- Destination IP Address
-- 20+ network flow features (bandwidth, packet count, duration, etc.)
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push and create a pull request
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License - see LICENSE file for details.
-
----
-
-## 👥 Authors
-
-**Intelligent Network Intrusion Detection Team**
-- AI/ML Research
-- Production Deployment
-- Web Interface Development
-
----
-
-## 🎓 References
-
-- [PyTorch Geometric Documentation](https://pytorch-geometric.readthedocs.io/)
-- [Graph Convolutional Networks](https://arxiv.org/abs/1609.02907)
-- [Graph Attention Networks](https://arxiv.org/abs/1710.10903)
-- [CICIDS2017 Dataset](https://www.unb.ca/cic/datasets/ids-2017.html)
-
----
-
-## 📞 Support
-
-For issues, questions, or contributions:
-1. Check the [Troubleshooting](#-troubleshooting) section
-2. Review [QUICK_START.md](QUICK_START.md) for common use cases
-3. Check [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md) for setup help
-
----
-
-## 🚀 What's Next?
-
-- [ ] Deploy to cloud (AWS/Azure/GCP)
-- [ ] Add real-time network monitoring
-- [ ] Implement alert notifications
-- [ ] Add model explainability (SHAP)
-- [ ] Expand to multi-class attack detection
-
----
-
-**Built with ❤️ using PyTorch and Graph Neural Networks**
+- The web endpoint performs inference with the GCN only.
+- `src/train.py` is currently empty; training is not exposed as a command-line workflow.
+- The repository does not include automated accuracy evaluation; metrics should not be assumed from older notes.
+- Local-path input is intended for trusted deployments because the server reads the path supplied by the client.

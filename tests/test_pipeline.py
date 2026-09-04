@@ -1,4 +1,9 @@
 from pathlib import Path
+import sys
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.preprocessing import preprocess_csv
 from src.graph_builder import build_graph
@@ -9,9 +14,7 @@ from src.predict import predict_graph
 # CSV PATH
 # ============================================================
 
-CSV_PATH = Path(
-    "data/test/network_flow_test_sample.csv"
-)
+CSV_PATH = PROJECT_ROOT / "data" / "test" / "network_flow_test_sample.csv"
 
 
 # ============================================================
